@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Arabic:wght@400;700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "IBM Plex Sans Arabic", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Noto Serif Arabic", serif;
+
+  --color-surface: #f9f9fd;
+  --color-surface-low: #f3f3f7;
+  --color-surface-highest: #e2e2e6;
+  --color-primary: #00030a;
+  --color-primary-container: #0a1d37;
+  --color-gold: #e9c176;
+  --color-text-main: #191c1e;
+
+  --spacing-32: 32px;
+}
+
+@layer base {
+  html {
+    direction: rtl;
+    background-color: var(--color-surface);
+    color: var(--color-text-main);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply font-sans;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+.ledger-row:nth-child(odd) {
+  @apply bg-surface-low;
+}
+
+.ledger-row:nth-child(even) {
+  @apply bg-surface;
+}
+
+.active-indicator {
+  width: 4px;
+  height: 24px;
+  background-color: var(--color-gold);
+  position: absolute;
+  right: 0;
+  border-radius: 4px 0 0 4px;
+}
+
+.gold-gradient {
+  background: linear-gradient(135deg, #00030a, #0a1d37);
+}
+
+.luxury-shadow {
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.05);
+}
+
+/* Custom scrollbar for archival feel */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--color-surface);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-surface-highest);
+  border-radius: 10px;
+}
