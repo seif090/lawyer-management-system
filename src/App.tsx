@@ -128,14 +128,58 @@ const Dashboard = () => (
     </div>
 
     <section className="grid grid-cols-1 md:grid-cols-4 gap-6">
-      <StatCard label="القضايا النشطة" value={MOCK_CASES.length} />
+      <StatCard label="القضايا النشطة" value={MOCK_CASES.filter(c => c.status === 'نشطة').length} />
       <StatCard label="إجمالي العملاء" value={MOCK_CLIENTS.length} isLow />
-      <StatCard label="الرصيد المالي" value="45,000 ر.س" />
-      <StatCard label="الجلسات القادمة" value="03" isLow />
+      <StatCard label="الرصيد المحصل" value={`${MOCK_FINANCES.filter(f => f.status === 'مدفوع').reduce((s,f) => s+f.amount, 0).toLocaleString()} ر.س`} />
+      <StatCard label="الجلسات القادمة" value={MOCK_SESSIONS.length} isLow />
     </section>
 
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
       <section className="lg:col-span-2 flex flex-col gap-10">
+        <div className="bg-white p-10 luxury-shadow space-y-6">
+          <div className="flex justify-between items-center">
+            <h3 className="font-serif text-2xl font-bold">إحصائيات القضايا السنوية</h3>
+            <div className="flex gap-4 text-[10px] font-bold text-gray-400">
+               <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-gold" /> قضايا جديدة</span>
+               <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-primary" /> قضايا مغلقة</span>
+            </div>
+          </div>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={[
+                { month: 'يناير', new: 4, closed: 2 },
+                { month: 'فبراير', new: 6, closed: 3 },
+                { month: 'مارس', new: 8, closed: 5 },
+                { month: 'أبريل', new: MOCK_CASES.length, closed: 1 },
+              ]}>
+                <XAxis dataKey="month" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                <Tooltip cursor={{ fill: '#f8f8f8' }} />
+                <Bar dataKey="new" fill="#C5A059" radius={[4, 4, 0, 0]} barSize={20} />
+                <Bar dataKey="closed" fill="#1A1A1A" radius={[4, 4, 0, 0]} barSize={20} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white p-10 luxury-shadow space-y-6">
+          <h3 className="font-serif text-2xl font-bold">توزيع القضايا حسب النوع</h3>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart layout="vertical" data={[
+                { type: 'تجاري', count: MOCK_CASES.filter(c => c.category === 'تجاري').length },
+                { type: 'تقني', count: MOCK_CASES.filter(c => c.category === 'تقني').length },
+                { type: 'أحوال شخصية', count: MOCK_CASES.filter(c => c.category === 'أحوال شخصية').length },
+                { type: 'شركات', count: MOCK_CASES.filter(c => c.category === 'شركات').length },
+              ]}>
+                <XAxis type="number" hide />
+                <YAxis dataKey="type" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#1A1A1A' }} />
+                <Tooltip cursor={{ fill: 'transparent' }} />
+                <Bar dataKey="count" fill="#C5A059" radius={[0, 4, 4, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
         <div className="flex flex-col gap-4">
           <div className="flex justify-between items-center mb-2">
             <h3 className="font-serif text-2xl font-bold">أحدث سجلات القضايا</h3>
@@ -525,33 +569,116 @@ const CasesPage = () => {
   );
 };
 
-const ClientsPage = () => (
-  <motion.div 
-    initial={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
-    className="space-y-8 flex-1 flex flex-col"
-  >
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {MOCK_CLIENTS.map((client) => (
-        <div key={client.id} className="bg-surface-highest p-8 luxury-shadow group hover:bg-white transition-all border-r-4 border-transparent hover:border-gold">
-          <div className="flex justify-between items-start mb-6">
-            <div className="w-12 h-12 bg-primary text-white flex items-center justify-center rounded-none font-serif text-xl border-b-4 border-gold">
-              {client.name[0]}
+const ClientsPage = () => {
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="space-y-8 flex-1 flex flex-col"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        {MOCK_CLIENTS.map((client) => (
+          <div key={client.id} className="bg-surface-highest p-8 luxury-shadow group hover:bg-white transition-all border-r-4 border-transparent hover:border-gold">
+            <div className="flex justify-between items-start mb-6">
+              <div className="w-12 h-12 bg-primary text-white flex items-center justify-center rounded-none font-serif text-xl border-b-4 border-gold">
+                {client.name[0]}
+              </div>
+              <span className="text-xs font-mono text-gray-400 uppercase tracking-widest">الموكل #00{client.id}</span>
             </div>
-            <span className="text-xs font-mono text-gray-400 uppercase tracking-widest">الموكل #00{client.id}</span>
+            <h4 className="font-serif text-2xl font-bold mb-4">{client.name}</h4>
+            <div className="space-y-2 text-sm text-gray-500 mb-8 font-mono">
+              <p className="flex justify-between"><span>البريد:</span> <span>{client.email}</span></p>
+              <p className="flex justify-between"><span>الهاتف:</span> <span>{client.phone}</span></p>
+              <p className="flex justify-between"><span>القضايا:</span> <span className="text-primary font-bold underline decoration-gold">{client.casesCount}</span></p>
+            </div>
+            <button 
+              onClick={() => setSelectedClient(client)}
+              className="w-full py-3 bg-surface-low text-primary font-bold hover:bg-primary hover:text-white transition-all"
+            >
+              عرض الملف الكامل
+            </button>
           </div>
-          <h4 className="font-serif text-2xl font-bold mb-4">{client.name}</h4>
-          <div className="space-y-2 text-sm text-gray-500 mb-8 font-mono">
-            <p className="flex justify-between"><span>البريد:</span> <span>{client.email}</span></p>
-            <p className="flex justify-between"><span>الهاتف:</span> <span>{client.phone}</span></p>
-            <p className="flex justify-between"><span>القضايا:</span> <span className="text-primary font-bold underline decoration-gold">{client.casesCount}</span></p>
+        ))}
+      </div>
+
+      <AnimatePresence>
+        {selectedClient && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setSelectedClient(null)}
+              className="absolute inset-0 bg-primary/20 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-2xl bg-white luxury-shadow p-12 border-t-8 border-gold"
+            >
+              <div className="flex justify-between items-start mb-10">
+                <div className="flex gap-6 items-center">
+                   <div className="w-20 h-20 bg-surface-low flex items-center justify-center font-serif text-3xl font-bold text-primary border-4 border-gold">
+                     {selectedClient.name[0]}
+                   </div>
+                   <div>
+                     <h3 className="font-serif text-3xl font-bold">{selectedClient.name}</h3>
+                     <p className="text-sm text-gray-400 font-mono">الرقم المرجعي: CL-00{selectedClient.id}</p>
+                   </div>
+                </div>
+                <button onClick={() => setSelectedClient(null)} className="text-gray-400 hover:text-primary transition-colors">إغلاق</button>
+              </div>
+
+              <div className="grid grid-cols-2 gap-10">
+                <div className="space-y-6">
+                   <h4 className="font-serif text-xl font-bold border-r-4 border-gold pr-4">اتصال الموكل</h4>
+                   <div className="space-y-4">
+                      <div className="bg-surface-low p-4">
+                         <p className="text-[10px] text-gray-400 uppercase mb-1">البريد الإلكتروني</p>
+                         <p className="font-bold">{selectedClient.email}</p>
+                      </div>
+                      <div className="bg-surface-low p-4">
+                         <p className="text-[10px] text-gray-400 uppercase mb-1">رقم الجوال الرسمي</p>
+                         <p className="font-bold font-mono">{selectedClient.phone}</p>
+                      </div>
+                   </div>
+                </div>
+                <div className="space-y-6">
+                   <h4 className="font-serif text-xl font-bold border-r-4 border-primary pr-4">القضايا الحالية</h4>
+                   <div className="space-y-3">
+                      {MOCK_CASES.filter(c => c.clientName === selectedClient.name).map((c, i) => (
+                        <div key={i} className="flex justify-between items-center text-sm border-b border-surface-low pb-2">
+                           <span className="font-bold">{c.title}</span>
+                           <span className="text-[10px] bg-gold/10 px-2 py-0.5 rounded text-primary">{c.status}</span>
+                        </div>
+                      ))}
+                      {MOCK_CASES.filter(c => c.clientName === selectedClient.name).length === 0 && (
+                        <p className="text-xs text-gray-400 italic">لا توجد قضايا نشطة حالياً.</p>
+                      )}
+                   </div>
+                   <div className="bg-primary p-6 text-white text-center luxury-shadow mt-4">
+                      <p className="text-xs text-gray-400 mb-1">إجمالي المبالغ المسددة</p>
+                      <p className="text-2xl font-bold">
+                        {MOCK_FINANCES.filter(f => f.clientName === selectedClient.name && f.status === 'مدفوع').reduce((s,f) => s+f.amount, 0).toLocaleString()} ر.س
+                      </p>
+                   </div>
+                </div>
+              </div>
+
+              <div className="mt-12 flex gap-4">
+                 <button className="flex-1 py-4 gold-gradient text-white font-bold luxury-shadow">تحديث ملف الموكل</button>
+                 <button className="flex-1 py-4 bg-surface-low text-primary font-bold">تحميل كافة الوثائق</button>
+              </div>
+            </motion.div>
           </div>
-          <button className="w-full py-3 bg-surface-low text-primary font-bold hover:bg-primary hover:text-white transition-all">عرض الملف الكامل</button>
-        </div>
-      ))}
-    </div>
-  </motion.div>
-);
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+};
 
 const ConflictCheckerPage = () => {
   const [query, setQuery] = useState('');
@@ -1001,66 +1128,133 @@ const SessionsPage = () => (
   </motion.div>
 );
 
-const FinancesPage = () => (
-  <motion.div 
-    initial={{ opacity: 0, y: 20 }}
-    animate={{ opacity: 1, y: 0 }}
-    className="space-y-8"
-  >
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-      <div className="bg-primary text-white p-10 flex flex-col justify-between h-48 luxury-shadow border-r-8 border-gold">
-        <CreditCard size={24} className="text-gold opacity-50" />
-        <div>
-          <p className="text-sm font-serif italic text-gray-400">إجمالي الأرباح</p>
-          <p className="text-4xl font-bold">124,500 ر.س</p>
-        </div>
-      </div>
-      <div className="bg-surface-highest p-10 flex flex-col justify-between h-48 luxury-shadow">
-        <Users size={24} className="text-primary opacity-20" />
-        <div>
-          <p className="text-sm font-serif italic text-gray-400">المطالبات المعلقة</p>
-          <p className="text-4xl font-bold">12,350 ر.س</p>
-        </div>
-      </div>
-      <div className="bg-surface-highest p-10 flex flex-col justify-between h-48 luxury-shadow">
-        <Briefcase size={24} className="text-primary opacity-20" />
-        <div>
-          <p className="text-sm font-serif italic text-gray-400">إجمالي المصروفات</p>
-          <p className="text-4xl font-bold">8,900 ر.س</p>
-        </div>
-      </div>
-    </div>
+const FinancesPage = () => {
+  const chartData = [
+    { name: 'يناير', value: 25000 },
+    { name: 'فبراير', value: 31200 },
+    { name: 'مارس', value: 54200 },
+    { name: 'أبريل', value: 90700 },
+  ];
 
-    <div className="bg-white overflow-hidden luxury-shadow">
-       <table className="w-full text-right border-collapse">
-        <thead className="bg-surface-low border-b-2 border-primary">
-          <tr className="font-serif uppercase text-xs tracking-widest text-primary">
-            <th className="p-6">العميل</th>
-            <th className="p-6">النوع</th>
-            <th className="p-6">التاريخ</th>
-            <th className="p-6">المبلغ</th>
-            <th className="p-6 text-left">الحالة</th>
-          </tr>
-        </thead>
-        <tbody>
-          {MOCK_FINANCES.map(f => (
-            <tr key={f.id} className="ledger-row border-b border-surface-low">
-              <td className="p-6 font-bold">{f.clientName}</td>
-              <td className="p-6 text-gray-500">{f.type}</td>
-              <td className="p-6 font-mono text-sm">{f.date}</td>
-              <td className="p-6 font-bold text-primary">{f.amount} ر.س</td>
-              <td className="p-6 text-left">
-                <span className={`px-4 py-1 text-[10px] font-bold ${f.status === 'مدفوع' ? 'bg-gold/10 text-primary border border-gold' : 'bg-red-50 text-red-500 border border-red-100'}`}>
-                   {f.status}
-                </span>
-              </td>
+  const pieData = [
+    { name: 'أتعاب قضايا', value: 85000, color: '#1A1A1A' },
+    { name: 'عقود واستشارات', value: 35000, color: '#C5A059' },
+    { name: 'مصروفات مستردة', value: 4500, color: '#E5E5E5' },
+  ];
+
+  const totalRevenue = MOCK_FINANCES.reduce((acc, f) => acc + (f.status === 'مدفوع' ? f.amount : 0), 0);
+  const pendingRevenue = MOCK_FINANCES.reduce((acc, f) => acc + (f.status === 'معلق' ? f.amount : 0), 0);
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-12"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-primary text-white p-10 flex flex-col justify-between h-48 luxury-shadow border-r-8 border-gold">
+          <CreditCard size={24} className="text-gold opacity-50" />
+          <div>
+            <p className="text-sm font-serif italic text-gray-400">إجمالي الأرباح المحصلة</p>
+            <p className="text-4xl font-bold">{totalRevenue.toLocaleString()} ر.س</p>
+          </div>
+        </div>
+        <div className="bg-surface-highest p-10 flex flex-col justify-between h-48 luxury-shadow">
+          <Users size={24} className="text-primary opacity-20" />
+          <div>
+            <p className="text-sm font-serif italic text-gray-400">المطالبات المعلقة</p>
+            <p className="text-4xl font-bold">{pendingRevenue.toLocaleString()} ر.س</p>
+          </div>
+        </div>
+        <div className="bg-surface-highest p-10 flex flex-col justify-between h-48 luxury-shadow">
+          <Briefcase size={24} className="text-primary opacity-20" />
+          <div>
+            <p className="text-sm font-serif italic text-gray-400">إجمالي الفواتير الصادرة</p>
+            <p className="text-4xl font-bold">{(totalRevenue + pendingRevenue).toLocaleString()} ر.س</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+        <div className="bg-white p-10 luxury-shadow space-y-6">
+          <h4 className="font-serif text-xl font-bold border-r-4 border-gold pr-4">منحنى نمو الأرباح</h4>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#999' }} />
+                <YAxis hide />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1A1A1A', border: 'none', color: '#fff', fontSize: '12px' }}
+                  itemStyle={{ color: '#C5A059' }}
+                />
+                <Line type="monotone" dataKey="value" stroke="#C5A059" strokeWidth={3} dot={{ r: 4, fill: '#C5A059' }} activeDot={{ r: 6 }} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white p-10 luxury-shadow space-y-6">
+          <h4 className="font-serif text-xl font-bold border-r-4 border-primary pr-4">توزيع مصادر الدخل</h4>
+          <div className="h-64 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={pieData}>
+                <XAxis dataKey="name" hide />
+                <Tooltip />
+                <Bar dataKey="value" radius={[5, 5, 0, 0]}>
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="flex justify-center gap-6 mt-4">
+              {pieData.map((item, i) => (
+                <div key={i} className="flex items-center gap-2">
+                   <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
+                   <span className="text-[10px] text-gray-500 font-bold">{item.name}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white overflow-hidden luxury-shadow">
+         <div className="p-8 border-b border-surface-low flex justify-between items-center">
+            <h4 className="font-serif text-2xl font-bold">جدول الحركات المالية</h4>
+            <button className="text-xs font-bold text-gold border-b-2 border-gold pb-1">تحميل التقرير المالي الكامل</button>
+         </div>
+         <table className="w-full text-right border-collapse">
+          <thead className="bg-surface-low border-b-2 border-primary">
+            <tr className="font-serif uppercase text-xs tracking-widest text-primary">
+              <th className="p-6">العميل</th>
+              <th className="p-6">النوع</th>
+              <th className="p-6">التاريخ</th>
+              <th className="p-6">المبلغ</th>
+              <th className="p-6 text-left">الحالة</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  </motion.div>
-);
+          </thead>
+          <tbody>
+            {[...MOCK_FINANCES].reverse().map(f => (
+              <tr key={f.id} className="ledger-row border-b border-surface-low hover:bg-surface-low/50 transition-colors">
+                <td className="p-6 font-bold">{f.clientName}</td>
+                <td className="p-6 text-gray-500">{f.type}</td>
+                <td className="p-6 font-mono text-sm">{f.date}</td>
+                <td className="p-6 font-bold text-primary">{f.amount.toLocaleString()} ر.س</td>
+                <td className="p-6 text-left">
+                  <span className={`px-4 py-1 text-[10px] font-bold ${f.status === 'مدفوع' ? 'bg-gold/10 text-primary border border-gold' : 'bg-red-50 text-red-500 border border-red-100'}`}>
+                     {f.status}
+                  </span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </motion.div>
+  );
+};
 
 const AssistantPage = () => {
   const [messages, setMessages] = useState<{ role: string, content: string }[]>([]);

@@ -218,9 +218,14 @@ export const MOCK_TASKS: Task[] = [
 ];
 
 export const MOCK_FINANCES: Transaction[] = [
-  { id: '1', clientName: 'شركة الأفق للاستثمار', amount: 25000, type: 'أتعاب', date: '2024-04-20', status: 'مدفوع' },
-  { id: '2', clientName: 'أحمد محمود القحطاني', amount: 5000, type: 'دفعة مقدمة', date: '2024-04-25', status: 'معلق' },
-  { id: '3', clientName: 'سارة آل رشيد', amount: 1200, type: 'مصروفات قضائية', date: '2024-04-18', status: 'مدفوع' },
+  { id: '1', clientName: 'شركة الأفق للاستثمار', amount: 25000, type: 'أتعاب', date: '2024-01-15', status: 'مدفوع' },
+  { id: '2', clientName: 'أحمد محمود القحطاني', amount: 5000, type: 'دفعة مقدمة', date: '2024-02-10', status: 'مدفوع' },
+  { id: '3', clientName: 'سارة آل رشيد', amount: 1200, type: 'مصروفات قضائية', date: '2024-02-25', status: 'مدفوع' },
+  { id: '4', clientName: 'لبنى بن علي', amount: 15000, type: 'أتعاب', date: '2024-03-05', status: 'مدفوع' },
+  { id: '5', clientName: 'مؤسسة الفهد للتجارة', amount: 8000, type: 'أتعاب', date: '2024-03-20', status: 'مدفوع' },
+  { id: '6', clientName: 'شركة الأفق للاستثمار', amount: 12000, type: 'أتعاب', date: '2024-04-01', status: 'مدفوع' },
+  { id: '7', clientName: 'أحمد محمود القحطاني', amount: 4500, type: 'أتعاب', date: '2024-04-12', status: 'معلق' },
+  { id: '8', clientName: 'سيف الدين خالد', amount: 20000, type: 'أتعاب', date: '2024-04-25', status: 'مدفوع' },
 ];
 
 export const MOCK_POAS: PowerOfAttorney[] = [
