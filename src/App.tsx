@@ -162,19 +162,45 @@ const Dashboard = () => (
         </div>
 
         <div className="bg-white p-10 luxury-shadow space-y-6">
-          <h3 className="font-serif text-2xl font-bold">توزيع القضايا حسب النوع</h3>
+          <div className="flex justify-between items-center">
+            <h3 className="font-serif text-2xl font-bold">ميزان العدالة الذكي (AI)</h3>
+            <span className="text-[10px] bg-gold/10 text-primary px-3 py-1 font-bold">تحليل احتمالي</span>
+          </div>
+          <p className="text-xs text-gray-400">توقعات النجاح بناءً على تحليل السوابق والبيانات الحالية لكل ملف قضائي.</p>
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart layout="vertical" data={[
-                { type: 'تجاري', count: MOCK_CASES.filter(c => c.category === 'تجاري').length },
-                { type: 'تقني', count: MOCK_CASES.filter(c => c.category === 'تقني').length },
-                { type: 'أحوال شخصية', count: MOCK_CASES.filter(c => c.category === 'أحوال شخصية').length },
-                { type: 'شركات', count: MOCK_CASES.filter(c => c.category === 'شركات').length },
+              <BarChart data={[
+                { type: 'تجاري', probability: 78, color: '#C5A059' },
+                { type: 'تقني', probability: 45, color: '#1A1A1A' },
+                { type: 'أحوال شخصية', probability: 92, color: '#C5A059' },
+                { type: 'شركات', probability: 60, color: '#1A1A1A' },
               ]}>
-                <XAxis type="number" hide />
-                <YAxis dataKey="type" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#1A1A1A' }} />
-                <Tooltip cursor={{ fill: 'transparent' }} />
-                <Bar dataKey="count" fill="#C5A059" radius={[0, 4, 4, 0]} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis dataKey="type" axisLine={false} tickLine={false} tick={{ fontSize: 10 }} />
+                <YAxis hide domain={[0, 100]} />
+                <Tooltip cursor={{ fill: 'transparent' }} content={({ active, payload }) => {
+                  if (active && payload && payload.length) {
+                    return (
+                      <div className="bg-primary p-4 border border-gold luxury-shadow text-white">
+                        <p className="text-xs font-bold">{payload[0].payload.type}</p>
+                        <p className="text-xl font-bold text-gold">{payload[0].value}% احتمال نجاح</p>
+                      </div>
+                    );
+                  }
+                  return null;
+                }} />
+                <Bar dataKey="probability" radius={[10, 10, 0, 0]} barSize={40}>
+                  {
+                    [
+                      { type: 'تجاري', probability: 78, color: '#C5A059' },
+                      { type: 'تقني', probability: 45, color: '#1A1A1A' },
+                      { type: 'أحوال شخصية', probability: 92, color: '#C5A059' },
+                      { type: 'شركات', probability: 60, color: '#1A1A1A' },
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))
+                  }
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -417,6 +443,30 @@ const CasesPage = () => {
                           تم قيد هذه الدعوى بتاريخ {selectedCase.date}. تتعلق القضية بـ {selectedCase.category} لصالح {selectedCase.clientName}. 
                           الحالة الراهنة هي "{selectedCase.status}" بانتظار الجلسة القادمة في {selectedCase.nextHearingDate}.
                         </p>
+                        
+                        {selectedCase.aiPrediction && (
+                          <div className="bg-primary/5 p-6 border-r-4 border-gold luxury-shadow space-y-4">
+                            <h5 className="text-xs font-bold text-primary flex items-center gap-2">
+                              <Sparkles size={14} className="text-gold" />
+                              تحليل الاستراتيجية الذكي
+                            </h5>
+                            <div className="grid grid-cols-3 gap-4">
+                              <div className="text-center">
+                                <p className="text-[9px] text-gray-400">نسبة النجاح</p>
+                                <p className="text-lg font-bold text-gold">{selectedCase.aiPrediction.successRate}%</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-[9px] text-gray-400">الصعوبة</p>
+                                <p className="text-sm font-bold">{selectedCase.aiPrediction.difficulty}</p>
+                              </div>
+                              <div className="text-center">
+                                <p className="text-[9px] text-gray-400">المدة المتوقعة</p>
+                                <p className="text-xs font-bold">{selectedCase.aiPrediction.estimatedDuration}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
                         <div className="grid grid-cols-2 gap-4">
                           <div className="bg-surface-low p-4 border border-surface-highest">
                             <p className="text-[9px] text-gray-400 uppercase tracking-widest mb-1">الخصم</p>
@@ -454,13 +504,22 @@ const CasesPage = () => {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {selectedCase.witnesses?.map((w, idx) => (
-                          <div key={idx} className="bg-white p-6 luxury-shadow border border-surface-low flex justify-between items-start group hover:border-gold transition-all">
+                          <div key={idx} className="bg-white p-6 luxury-shadow border border-surface-low flex justify-between items-start group hover:border-gold transition-all relative overflow-hidden">
+                            {w.reliabilityScore && (
+                              <div className="absolute top-0 left-0 w-1 pt-1 h-full bg-gold/30" style={{ height: `${w.reliabilityScore * 10}%` }} title={`درجة الموثوقية: ${w.reliabilityScore}/10`} />
+                            )}
                             <div>
-                              <p className="font-bold text-primary mb-1">{w.name}</p>
+                              <div className="flex items-center gap-2 mb-1">
+                                <p className="font-bold text-primary">{w.name}</p>
+                                {w.type && <span className="text-[8px] bg-primary/10 text-primary px-1 font-bold">{w.type}</span>}
+                              </div>
                               <p className="text-[10px] text-gray-400 font-mono mb-3">{w.phone}</p>
-                              <span className={`px-2 py-0.5 text-[9px] font-bold ${w.status === 'تم الاستماع' ? 'bg-green-50 text-green-600' : 'bg-gold/10 text-primary'}`}>
-                                {w.status}
-                              </span>
+                              <div className="flex gap-2 items-center">
+                                <span className={`px-2 py-0.5 text-[9px] font-bold ${w.status === 'تم الاستماع' ? 'bg-green-50 text-green-600' : 'bg-gold/10 text-primary'}`}>
+                                  {w.status}
+                                </span>
+                                {w.reliabilityScore && <span className="text-[9px] text-gray-400">موثوقية {w.reliabilityScore}/10</span>}
+                              </div>
                             </div>
                             <div className="flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all">
                               <button className="p-1 hover:bg-surface-low"><Search size={14} className="text-gray-400" /></button>
@@ -808,23 +867,74 @@ const WitnessesPage = () => (
   </motion.div>
 );
 
-const CalendarPage = () => (
-  <motion.div 
-    initial={{ opacity: 0, x: 20 }}
-    animate={{ opacity: 1, x: 0 }}
-    className="bg-white p-10 luxury-shadow flex flex-col items-center justify-center min-h-[400px] border-t-8 border-gold"
-  >
-    <div className="text-gold mb-6">
-      <LayoutDashboard size={80} strokeWidth={1} />
-    </div>
-    <h3 className="font-serif text-3xl font-bold mb-4">التقويم القضائي الذكي</h3>
-    <p className="text-gray-500 text-center max-w-md leading-relaxed">
-      هنا يمكنك متابعة مواعيد الجلسات، آجال الطعون، والمواعيد القانونية الهامة. 
-      <br />
-      <span className="text-[10px] text-gold font-bold uppercase tracking-widest mt-4 block">قيد التطوير - ترقبوا النسخة الكاملة قريباً</span>
-    </p>
-  </motion.div>
-);
+const CalendarPage = () => {
+  const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس'];
+  
+  return (
+    <motion.div 
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      className="space-y-12"
+    >
+      <div className="flex gap-4 overflow-x-auto no-scrollbar pb-4">
+        {days.map((day, i) => (
+          <div key={day} className={`flex-1 min-w-[200px] p-6 luxury-shadow border-t-4 transition-all ${i === 1 ? 'bg-primary text-white border-gold' : 'bg-white text-primary border-surface-highest'}`}>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-50 mb-2">{day}</p>
+            <p className="font-serif text-2xl font-bold">{12 + i} مايو</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-10">
+        <div className="lg:col-span-3 space-y-8">
+           <h3 className="font-serif text-3xl font-bold flex items-center gap-4">
+             أجندة الجلسات اليومية
+             <span className="text-xs bg-gold text-primary px-3 py-1">١٣ مايو ٢٠٢٤</span>
+           </h3>
+           
+           <div className="relative border-r-2 border-surface-low space-y-6">
+              {[
+                { time: '09:00 ص', event: 'قضية العقارات الدولية', location: 'محكمة الاستئناف - القاعة ٤', type: 'جلسة مرافعة' },
+                { time: '11:00 ص', event: 'اجتماع موكل - شركة الأفق', location: 'مقر المكتب - غرفة الاجتماعات', type: 'مشاورة قانونية' },
+                { time: '01:30 م', event: 'جلسة نطق بالحكم - آل رشيد', location: 'المحكمة العامة', type: 'جلسة حكم' },
+              ].map((item, i) => (
+                <div key={i} className="relative pr-10 items-center flex group whitespace-nowrap">
+                  <div className="absolute right-[-9px] w-4 h-4 rounded-full bg-white border-2 border-gold luxury-shadow z-10" />
+                  <div className="flex gap-10 items-center w-full bg-white p-6 luxury-shadow border-l-4 border-transparent group-hover:border-gold transition-all">
+                    <span className="text-sm font-bold text-gold font-mono w-20">{item.time}</span>
+                    <div className="flex-1">
+                      <p className="font-bold text-lg">{item.event}</p>
+                      <p className="text-xs text-gray-400">{item.location}</p>
+                    </div>
+                    <span className="text-[10px] bg-surface-low text-primary px-3 py-1 font-bold">{item.type}</span>
+                  </div>
+                </div>
+              ))}
+           </div>
+        </div>
+
+        <div className="space-y-8">
+          <div className="bg-surface-low p-8 border-t-8 border-primary">
+            <h4 className="font-serif text-xl font-bold mb-6">مواعيد الشهر العقاري</h4>
+            <div className="space-y-6">
+              {MOCK_POAS.filter(p => p.appointmentDate).map((poa, i) => (
+                <div key={i} className="border-b border-surface-highest pb-4 last:border-0 last:pb-0">
+                  <p className="text-xs font-bold">{poa.clientName}</p>
+                  <p className="text-[10px] text-gold font-mono mt-1">{poa.appointmentDate} - {poa.notaryOffice}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="bg-gold/10 p-8 border-r-4 border-gold">
+             <p className="text-xs font-bold text-primary mb-2">تنبيه مواعيد الطعن</p>
+             <p className="text-[10px] text-gray-500 italic">يتبقى ٣ أيام على انتهاء موعد الطعن في القضية رقم ٤٤٠/٢٣</p>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
 
 const NotaryPage = () => {
   const [trackId, setTrackId] = useState('');
@@ -874,7 +984,7 @@ const NotaryPage = () => {
             <div className="absolute top-0 right-0 p-4 bg-gold text-primary font-bold text-[10px] uppercase tracking-widest">
               نتائج التتبع المباشر
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
               <div className="space-y-6">
                 <div>
                   <p className="text-[10px] text-gray-400 uppercase tracking-widest">الموكل</p>
@@ -890,6 +1000,12 @@ const NotaryPage = () => {
                     <p className="font-bold text-gold">{trackedRecord.status}</p>
                   </div>
                 </div>
+                {trackedRecord.expiryDate && (
+                  <div className="p-4 bg-red-50 border border-red-100">
+                    <p className="text-[9px] text-red-600 font-bold uppercase">تنبيه انتهاء الصلاحية</p>
+                    <p className="font-bold text-red-700">ينتهي في: {trackedRecord.expiryDate}</p>
+                  </div>
+                )}
               </div>
 
               <div className="border-r-2 border-surface-low pr-10">
@@ -910,6 +1026,19 @@ const NotaryPage = () => {
                     </div>
                   ))}
                 </div>
+              </div>
+
+              <div className="flex flex-col items-center justify-center border-r-2 border-surface-low pr-10">
+                <div className="w-32 h-32 bg-surface-low border-2 border-gold p-2 flex items-center justify-center relative group">
+                  <div className="absolute inset-0 bg-primary/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold cursor-pointer">تحميل QR</div>
+                  <div className="grid grid-cols-4 gap-1 w-full h-full opacity-30">
+                    {Array.from({ length: 16 }).map((_, i) => (
+                      <div key={i} className={`bg-primary rounded-sm ${Math.random() > 0.5 ? 'opacity-100' : 'opacity-20'}`} />
+                    ))}
+                  </div>
+                </div>
+                <p className="text-[10px] text-gray-400 uppercase font-bold mt-4">كود التحقق الرقمي</p>
+                <button className="mt-4 text-[10px] font-bold text-primary underline">التحقق عبر بوابة ناجز</button>
               </div>
             </div>
           </motion.div>
@@ -1037,6 +1166,20 @@ const LibraryPage = () => (
         <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
         <input type="text" placeholder="بحث سريع..." className="w-full pr-10 py-2 bg-white luxury-shadow outline-none border-b border-transparent focus:border-gold text-xs" />
       </div>
+    </div>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+      {[
+        { title: 'الأنظمة التجارية', count: 42, icon: <Briefcase /> },
+        { title: 'السوابق القضائية', count: 128, icon: <Gavel /> },
+        { title: 'لوائح الأحوال الشخصية', count: 15, icon: <Users /> },
+      ].map((collection, i) => (
+        <div key={i} className="bg-white p-8 luxury-shadow border-t-4 border-gold hover:-translate-y-1 transition-all cursor-pointer">
+          <div className="text-gold mb-4 opacity-50">{collection.icon}</div>
+          <h5 className="font-serif text-lg font-bold mb-2">{collection.title}</h5>
+          <p className="text-[10px] text-gray-400 font-mono italic">{collection.count} مستند مرجعي</p>
+        </div>
+      ))}
     </div>
 
     <div className="grid grid-cols-1 gap-6">

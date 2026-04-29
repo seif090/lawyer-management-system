@@ -10,6 +10,8 @@ export interface Witness {
   caseId: string;
   status: 'تم الاستماع' | 'منتظر الجلسة' | 'لم يحضر';
   testimonySummary?: string;
+  reliabilityScore?: number; // 1-10
+  type?: 'شهود إثبات' | 'شهود نفي' | 'خبير';
 }
 
 export interface Evidence {
@@ -42,6 +44,11 @@ export interface Case {
   timeline?: CaseTimelineEntry[];
   courtBranch?: string;
   caseNumber?: string;
+  aiPrediction?: {
+    successRate: number;
+    difficulty: 'سهلة' | 'متوسطة' | 'معقدة';
+    estimatedDuration: string;
+  };
 }
 
 export interface Client {
@@ -61,9 +68,9 @@ export interface Session {
 }
 
 export const MOCK_WITNESSES: Witness[] = [
-  { id: '1', name: 'سعيد بن خالد', phone: '0501112233', caseId: '1', status: 'تم الاستماع', testimonySummary: 'أفاد الشاهد بوجود نزاع مسبق على حدود العقار بين الطرفين.' },
-  { id: '2', name: 'منيرة العبدالله', phone: '0554445566', caseId: '1', status: 'منتظر الجلسة' },
-  { id: '3', name: 'عصام المصري', phone: '0567778899', caseId: '3', status: 'لم يحضر' },
+  { id: '1', name: 'سعيد بن خالد', phone: '0501112233', caseId: '1', status: 'تم الاستماع', testimonySummary: 'أفاد الشاهد بوجود نزاع مسبق على حدود العقار بين الطرفين.', reliabilityScore: 9, type: 'شهود إثبات' },
+  { id: '2', name: 'منيرة العبدالله', phone: '0554445566', caseId: '1', status: 'منتظر الجلسة', reliabilityScore: 7, type: 'شهود نفي' },
+  { id: '3', name: 'عصام المصري', phone: '0567778899', caseId: '3', status: 'لم يحضر', reliabilityScore: 4, type: 'خبير' },
 ];
 
 export const MOCK_CASES: Case[] = [
@@ -78,6 +85,7 @@ export const MOCK_CASES: Case[] = [
     nextHearingDate: '2024-05-15',
     courtBranch: 'المحكمة التجارية بالرياض',
     caseNumber: '٤٤٠/٢٣',
+    aiPrediction: { successRate: 85, difficulty: 'متوسطة', estimatedDuration: '٦ أشهر' },
     witnesses: [MOCK_WITNESSES[0], MOCK_WITNESSES[1]],
     evidence: [
       { id: 'e1', title: 'صك الملكية الأصلي', type: 'مستند', uploadDate: '2024-04-16' },
@@ -99,7 +107,8 @@ export const MOCK_CASES: Case[] = [
     date: '2024-04-15', 
     nextHearingDate: '2024-05-20',
     courtBranch: 'المحكمة العامة المجمع الحقوقي',
-    caseNumber: '٧٨٩/أ/٦'
+    caseNumber: '٧٨٩/أ/٦',
+    aiPrediction: { successRate: 60, difficulty: 'معقدة', estimatedDuration: '١٢ شهر' },
   },
   { 
     id: '3', 
@@ -110,7 +119,8 @@ export const MOCK_CASES: Case[] = [
     date: '2024-04-10', 
     nextHearingDate: '2024-05-12',
     witnesses: [MOCK_WITNESSES[2]],
-    courtBranch: 'محكمة الأحوال الشخصية شمال الرياض'
+    courtBranch: 'محكمة الأحوال الشخصية شمال الرياض',
+    aiPrediction: { successRate: 95, difficulty: 'سهلة', estimatedDuration: '٣ أشهر' },
   },
   { 
     id: '4', 
@@ -120,7 +130,8 @@ export const MOCK_CASES: Case[] = [
     clientName: 'البنك الوطني', 
     opponentName: 'المجموعة العقارية الدولية',
     date: '2024-03-25', 
-    nextHearingDate: '2024-06-01' 
+    nextHearingDate: '2024-06-01',
+    aiPrediction: { successRate: 100, difficulty: 'سهلة', estimatedDuration: 'انتهت' },
   },
 ];
 
@@ -162,9 +173,11 @@ export interface PowerOfAttorney {
   clientName: string;
   nationalId: string;
   poaType: 'عام رسمي' | 'قضايا' | 'خاص' | 'تجاري';
-  status: 'تحت التجهيز' | 'تم التوثيق' | 'في انتظار الزيارة' | 'مرفوض';
+  status: 'تحت التجهيز' | 'تم التوثيق' | 'في انتظار الزيارة' | 'مرفوض' | 'منتهي';
   notaryOffice?: string;
   appointmentDate?: string;
+  expiryDate?: string;
+  qrCodeLink?: string;
   timeline?: { status: string, date: string, completed: boolean }[];
 }
 
